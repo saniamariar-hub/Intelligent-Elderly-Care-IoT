@@ -1,0 +1,62 @@
+#include <LiquidCrystal.h>
+
+// LCD pins: RS, E, D4, D5, D6, D7
+LiquidCrystal lcd(7, 6, 5, 4, 3, 8);
+
+// Pin definitions
+const int tempPin  = A0;   // TMP36
+const int heartPin = A1;   // Potentiometer
+const int tiltPin  = 2;    // Tilt sensor
+const int ledPin   = 9;    // Alert LED
+
+void setup() {
+  pinMode(tiltPin, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+
+  lcd.begin(16, 2);
+  Serial.begin(9600);
+
+  // Startup message
+  lcd.setCursor(0, 0);
+  lcd.print("Elderly Care");
+  lcd.setCursor(0, 1);
+  lcd.print("System Ready");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  // ----- Temperature Reading -----
+  int rawTemp = analogRead(tempPin);
+  float voltage = rawTemp * 5.0 / 1023.0;
+  float tempC = (voltage - 0.5) * 100.0;
+
+  // ----- Heart Rate Simulation -----
+  int rawHeart = analogRead(heartPin);
+  int bpm = map(rawHeart, 0, 1023, 60, 120);
+
+  // ----- Fall Detection -----
+  bool fallDetected = (digitalRead(tiltPin) == LOW);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("HR:");
+  lcd.print(bpm);
+  lcd.print(" BPM");
+
+  lcd.setCursor(0, 1);
+
+  if (fallDetected) {
+    lcd.print("FALL ALERT!");
+    digitalWrite(ledPin, HIGH);
+    Serial.println("EMERGENCY: FALL DETECTED");
+  } else {
+    lcd.print("Temp:");
+    lcd.print(tempC, 1);
+    lcd.print(" C");
+    digitalWrite(ledPin, LOW);
+    Serial.println("Vitals Normal");
+  }
+
+  delay(2000);
+}
